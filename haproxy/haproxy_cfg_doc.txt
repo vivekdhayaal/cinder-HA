@@ -1,0 +1,316 @@
+
+log-send-hostname [<string>]
+  Sets the hostname field in the syslog header. 
+  
+node <name>
+  Only letters, digits, hyphen and underscore are allowed, like in DNS names.
+
+  This statement is useful in HA configurations where two or more processes or
+  servers share the same IP address. By setting a different node-name on all
+  nodes, it becomes easy to immediately spot what server is handling the
+  traffic.
+
+  
+3.2. Performance tuning
+-----------------------
+
+maxconn <number>
+  Sets the maximum per-process number of concurrent connections to <number>. It
+  is equivalent to the command-line argument "-n". Proxies will stop accepting
+  connections when this limit is reached. 
+  
+Right now, two major proxy modes are supported : "tcp", also known as layer 4,
+and "http", also known as layer 7. In layer 4 mode, HAProxy simply forwards
+bidirectional traffic between two sides. In layer 7 mode, HAProxy analyzes the
+protocol, and can interact with it by allowing, blocking, switching, adding,
+modifying, or removing arbitrary contents in requests or responses, based on
+arbitrary crite
+
+mode { tcp|http|health }
+  Set the running mode or protocol of the instance
+  May be used in sections :   defaults | frontend | listen | backend
+                                 yes   |    yes   |   yes  |   yes
+  Arguments :
+    tcp       The instance will work in pure TCP mode. A full-duplex connection
+              will be established between clients and servers, and no layer 7
+              examination will be performed. This is the default mode. It
+              should be used for SSL, SSH, SMTP, ...
+
+    http      The instance will work in HTTP mode. The client request will be
+              analyzed in depth before connecting to any server. Any request
+              which is not RFC-compliant will be rejected. Layer 7 filtering,
+              processing and switching will be possible. This is the mode which
+              brings HAProxy most of its value.
+
+			  
+			  
+			  
+stats uri <prefix>
+  Enable statistics and define the URI prefix to access them
+  May be used in sections :   defaults | frontend | listen | backend
+                                 yes   |    no    |   yes  |   yes
+  Arguments :
+    <prefix>  is the prefix of any URI which will be redirected to stats. This
+              prefix may contain a question mark ('?') to indicate part of a
+              query string.
+
+  The statistics URI is intercepted on the relayed traffic, so it appears as a
+  page within the normal application. It is strongly advised to ensure that the
+  selected URI will never appear in the application, otherwise it will never be
+  possible to reach it in the application.
+
+  The default URI compiled in haproxy is "/haproxy?stats", but this may be
+  changed at build time, so it's better to always explicitly specify it here.
+  It is generally a good idea to include a question mark in the URI so that
+  intermediate proxies refrain from caching the results. Also, since any string
+  beginning with the prefix will be accepted as a stats request, the question
+  mark helps ensuring that no valid URI will begin with the same words.
+
+  It is sometimes very convenient to use "/" as the URI prefix, and put that
+  statement in a "listen" instance of its own. That makes it easy to dedicate
+  an address or a port to statistics only.
+
+  Though this statement alone is enough to enable statistics reporting, it is
+  recommended to set all other settings in order to avoid relying on default
+  unobvious parameters.
+
+  Example :
+    # public access (limited to this backend only)
+    backend public_www
+        server srv1 192.168.0.1:80
+        stats enable
+        stats hide-version
+        stats scope   .
+        stats uri     /admin?stats
+        stats realm   Haproxy\ Statistics
+        stats auth    admin1:AdMiN123
+        stats auth    admin2:AdMiN321
+
+    # internal monitoring access (unlimited)
+    backend private_monitoring
+        stats enable
+        stats uri     /admin?stats
+        stats refresh 5s
+
+  See also : "stats auth", "stats enable", "stats realm"
+  
+stats enable
+  Enable statistics reporting with default settings
+  May be used in sections :   defaults | frontend | listen | backend
+                                 yes   |    no    |   yes  |   yes
+  Arguments : none
+
+  This statement enables statistics reporting with default settings defined
+  at build time. Unless stated otherwise, these settings are used :
+    - stats uri   : /haproxy?stats
+    - stats realm : "HAProxy Statistics"
+    - stats auth  : no authentication
+    - stats scope : no restriction
+
+  Though this statement alone is enough to enable statistics reporting, it is
+  recommended to set all other settings in order to avoid relying on default
+  unobvious parameters.
+
+  Example :
+    # public access (limited to this backend only)
+    backend public_www
+        server srv1 192.168.0.1:80
+        stats enable
+        stats hide-version
+        stats scope   .
+        stats uri     /admin?stats
+        stats realm   Haproxy\ Statistics
+        stats auth    admin1:AdMiN123
+        stats auth    admin2:AdMiN321
+
+    # internal monitoring access (unlimited)
+    backend private_monitoring
+        stats enable
+        stats uri     /admin?stats
+        stats refresh 5s
+
+  See also : "stats auth", "stats realm", "stats uri"
+
+log global
+log <address> <facility> [<level> [<minlevel>]]
+  Enable per-instance logging of events and traffic.
+  May be used in sections :   defaults | frontend | listen | backend
+                                 yes   |    yes   |   yes  |   yes
+  Arguments :
+    global     should be used when the instance's logging parameters are the
+               same as the global ones. This is the most common usage. "global"
+               replaces <address>, <facility> and <level> with those of the log
+               entries found in the "global" section. Only one "log global"
+               statement may be used per instance, and this form takes no other
+               parameter.
+
+    <address>  indicates where to send the logs. It takes the same format as
+               for the "global" section's logs, and can be one of :
+
+               - An IPv4 address optionally followed by a colon (':') and a UDP
+                 port. If no port is specified, 514 is used by default (the
+                 standard syslog port).
+
+               - A filesystem path to a UNIX domain socket, keeping in mind
+                 considerations for chroot (be sure the path is accessible
+                 inside the chroot) and uid/gid (be sure the path is
+                 appropriately writeable).
+				 
+				 
+  
+inter <delay>
+  The "inter" parameter sets the interval between two consecutive health checks
+  to <delay> milliseconds. If left unspecified, the delay defaults to 2000 ms.
+  
+  
+The HTTP format is the most complete and the best suited for HTTP proxies. It
+is enabled by when "option httplog" is specified in the frontend. It provides
+the same level of information as the TCP format with additional features which
+are specific to the HTTP protocol. Ju
+
+It is quite common to have some monitoring tools perform health checks on
+haproxy. Sometimes it will be a layer 3 load-balancer such as LVS or any
+commercial load-balancer, and sometimes it will simply be a more complete
+monitoring system such as Nagios. When the tests are very frequent, users often
+ask how to disable logging for those checks. There are three possibilities :
+
+  - if connections come from everywhere and are just TCP probes, it is often
+    desired to simply disable logging of connections without data exchange, by
+    setting "option dontlognull" in the frontend. It also disables logging of
+    port scans, which may or may not be desired.
+
+  - if the tests are performed on a known URI, use "monitor-uri" to declare
+    this URI as dedicated to monitoring. Any host sending this request will
+    only get the result of a health-check, and the request will not be logged.
+
+	
+contimeout <timeout> (deprecated)
+  Set the maximum time to wait for a connection attempt to a server to succeed.
+  May be used in sections :   defaults | frontend | listen | backend
+                                 yes   |    no    |   yes  |   yes
+  Arguments :
+    <timeout> is the timeout value is specified in milliseconds by default, but
+              can be in any other unit if the number is suffixed by the unit,
+              as explained at the top of this document.
+
+  If the server is located on the same LAN as haproxy, the connection should be
+  immediate (less than a few milliseconds). Anyway, it is a good practice to
+  cover one or several TCP packet losses by specifying timeouts that are
+  slightly above multiples of 3 seconds (eg: 4 or 5 seconds). By default, the
+  connect timeout also presets the queue timeout to the same value if this one
+  has not been specified. Historically, the contimeout was also used to set the
+  tarpit timeout in a listen section, which is not possible in a pure frontend.
+
+  This parameter is specific to backends, but can be specified once for all in
+  "defaults" sections. This is in fact one of the easiest solutions not to
+  forget about it. An unspecified timeout results in an infinite timeout, which
+  is not recommended. 
+  
+timeout connect <timeout>
+timeout contimeout <timeout> (deprecated)
+  Set the maximum time to wait for a connection attempt to a server to succeed.
+  May be used in sections :   defaults | frontend | listen | backend
+                                 yes   |    no    |   yes  |   yes
+  Arguments :
+    <timeout> is the timeout value specified in milliseconds by default, but
+              can be in any other unit if the number is suffixed by the unit,
+              as explained at the top of this document.
+
+  If the server is located on the same LAN as haproxy, the connection should be
+  immediate (less than a few milliseconds). Anyway, it is a good practice to
+  cover one or several TCP packet losses by specifying timeouts that are
+  slightly above multiples of 3 seconds (eg: 4 or 5 seconds). By default, the
+  connect timeout also presets both queue and tarpit timeouts to the same value
+  if these have not been specified.
+
+  This parameter is specific to backends, but can be specified once for all in
+  "defaults" sections. This is in fact one of the easiest solutions not to
+  forget about it. An unspecified timeout results in an infinite timeout, which
+  is not recommended. Such a usage is accepted and works but reports a warning
+  during startup because it may results in accumulation of failed sessions in
+  the system if the system's timeouts are not configured either.
+  
+
+  
+timeout client <timeout>
+timeout clitimeout <timeout> (deprecated)
+  Set the maximum inactivity time on the client side.
+  May be used in sections :   defaults | frontend | listen | backend
+                                 yes   |    yes   |   yes  |   no
+  Arguments :
+    <timeout> is the timeout value specified in milliseconds by default, but
+              can be in any other unit if the number is suffixed by the unit,
+              as explained at the top of this document.
+
+  The inactivity timeout applies when the client is expected to acknowledge or
+  send data. In HTTP mode, this timeout is particularly important to consider
+  during the first phase, when the client sends the request, and during the
+  response while it is reading data sent by the server. The value is specified
+  in milliseconds by default, but can be in any other unit if the number is
+  suffixed by the unit, as specified at the top of this document. In TCP mode
+  (and to a lesser extent, in HTTP mode), it is highly recommended that the
+  client timeout remains equal to the server timeout in order to avoid complex
+  situations to debug. It is a good practice to cover one or several TCP packet
+  losses by specifying timeouts that are slightly above multiples of 3 seconds
+  (eg: 4 or 5 seconds).
+
+  This parameter is specific to frontends, but can be specified once for all in
+  "defaults" sections. This is in fact one of the easiest solutions not to
+  forget about it. An unspecified timeout results in an infinite timeout, which
+  is not recommended. Such a usage is accepted and works but reports a warning
+  during startup because it may results in accumulation of expired sessions in
+  the system if the system's timeouts are not configured either.
+
+  
+
+timeout server <timeout>
+timeout srvtimeout <timeout> (deprecated)
+  Set the maximum inactivity time on the server side.
+  May be used in sections :   defaults | frontend | listen | backend
+                                 yes   |    no    |   yes  |   yes
+  Arguments :
+    <timeout> is the timeout value specified in milliseconds by default, but
+              can be in any other unit if the number is suffixed by the unit,
+              as explained at the top of this document.
+
+  The inactivity timeout applies when the server is expected to acknowledge or
+  send data. In HTTP mode, this timeout is particularly important to consider
+  during the first phase of the server's response, when it has to send the
+  headers, as it directly represents the server's processing time for the
+  request. To find out what value to put there, it's often good to start with
+  what would be considered as unacceptable response times, then check the logs
+  to observe the response time distribution, and adjust the value accordingly.
+
+  The value is specified in milliseconds by default, but can be in any other
+  unit if the number is suffixed by the unit, as specified at the top of this
+  document. In TCP mode (and to a lesser extent, in HTTP mode), it is highly
+  recommended that the client timeout remains equal to the server timeout in
+  order to avoid complex situations to debug. Whatever the expected server
+  response times, it is a good practice to cover at least one or several TCP
+  packet losses by specifying timeouts that are slightly above multiples of 3
+  seconds (eg: 4 or 5 seconds minimum).
+
+  This parameter is specific to backends, but can be specified once for all in
+  "defaults" sections. This is in fact one of the easiest solutions not to
+  forget about it. An unspecified timeout results in an infinite timeout, which
+  is not recommended. Such a usage is accepted and works but reports a warning
+  during startup because it may results in accumulation of expired sessions in
+  the system if the system's timeouts are not configured either.
+  
+  
+monitor-uri <uri>
+  Intercept a URI used by external components' monitor requests
+  May be used in sections :   defaults | frontend | listen | backend
+                                 yes   |    yes   |   yes  |   no
+  Arguments :
+    <uri>     is the exact URI which we want to intercept to return HAProxy's
+              health status instead of forwarding the request.
+
+  When an HTTP request referencing <uri> will be received on a frontend,
+  HAProxy will not forward it nor log it, but instead will return either
+  "HTTP/1.0 200 OK" or "HTTP/1.0 503 Service unavailable", depending on failure
+  conditions defined with "monitor fail". This is normally enough for any
+  front-end HTTP probe to detect that the service is UP and running without
+  forwarding the request to a backend server. Note that the HTTP method, the
+  version and all headers are ignored, but the request must at least be valid
+  at the HTTP level. This keyword may only be used with an HTTP-mode frontend.
