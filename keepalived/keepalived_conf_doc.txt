@@ -1,0 +1,7 @@
+
+
+authentication: is used to protect our VRRP advertisements from
+spoofed and reply attacks.
+
+vrrp_script - interval - used to determine interval for successive haproxy
+                         health checks
