@@ -1,29 +1,36 @@
 global_defs {
-           router_id <hostname>
+           router_id vagrantnode2
+           notification_email {
+           email
+           email
+           }
+           notification_email_from email
+           smtp_server host
+           smtp_connect_timeout num
  }
 
 # Script used to check if HAProxy is running
 vrrp_script check_haproxy {
            script "/usr/bin/killall -0 haproxy"
-           interval 1
+           interval 2
 }
 
 # The priority specifies the order in which the assigned interface to take over in a failover
 vrrp_instance VI_01 {
      state MASTER
-     interface <if_name>
-     virtual_router_id <num>
-     priority <num>
+     interface eth3
+     virtual_router_id 99
+     priority 199
      # The virtual ip address shared between the two load balancers
      virtual_ipaddress {
-                 <vip>
+                 10.140.12.199
      }
      track_script {
                  check_haproxy
      }
      authentication {
-     auth_type PASS
-     auth_pass password
+     auth_type PASS|AH
+     auth_pass string
      }
 }
 
