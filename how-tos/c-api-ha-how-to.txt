@@ -1,0 +1,44 @@
+Acquire two nodes, one to act as MASTER and the other as Backup.
+
+Keepalived Master node:
+1)add "net.ipv4.ip_nonlocal_bind=1" to /etc/sysctl.conf
+2)sudo sysctl -p
+3)sudo apt-get install keepalived
+4)create /etc/keepalived/keepalived.conf filling up the variables with values in the template available @
+  https://github.com/vivekdhayaal/cinder-HA/blob/master/keepalived/keepalived.conf
+5)sudo update-rc.d keepalived defaults
+6)sudo service keepalived start
+
+Keepalived Backup node:
+1)Repeat the same four steps
+2)Set the below values in keepalived.conf
+  * state BACKUP
+  * virtual_router_id <unique number for a keepalived cluster>
+  * priority <number less than priority of MASTER>.
+
+Haproxy Master node:
+1)sudo apt-get install haproxy
+2)set "ENABLED=1" in /etc/default/haproxy
+3)modify /etc/haproxy/haproxy.cfg with the configuration shown @
+  https://github.com/vivekdhayaal/cinder-HA/blob/master/haproxy/haproxy.cfg
+4)sudo update-rc.d haproxy defaults
+5)sudo service haproxy start
+
+
+Haproxy Backup node:
+1)Repeat the same five steps
+
+Cinder MASTER node:
+1)Setup devstack with cinder services alone
+
+Cinder Backup node:
+1)Setup devstack with cinder services alone
+2)Stop all services
+3)Specify master node IP in "auth_uri", "auth_url", "connection", "rabbit_hosts", "glance_api_servers" params in /etc/cinder/cinder.conf
+4)Start c-api service alone.
+
+
+Scale-out:
+1)Add new node with c-api service alone running(as mentioned earlier).
+2)Add the new node details to MASTER node haproxy.cfg and restart haproxy
+3)Add the new node details to BACKUP node haproxy.cfg and restart haproxy
