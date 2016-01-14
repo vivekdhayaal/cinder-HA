@@ -1,0 +1,55 @@
+Test plan with a two node setup:
+
+
+* Setup the environment as specified in c-api-ha-how-to.txt
+
+
+* Test cases:
+
+1)SW failure:
+
+Case1 - stop service keepalived in MASTER node
+  a)gracefully - sudo service keepalived stop
+  b)forcefully - sudo kill -9 <pid>
+
+Expected results 1a,1b - vip should move to BACKUP node(becomes new MASTER) and requests should continue to be served through vip.
+
+Case2 - bring keepalived back up in MASTER node
+
+Expected result2 - vip should move back to MASTER node and requests should continue to be served through the vip.
+
+Case3 - stop service haproxy in MASTER node
+  a)gracefully - sudo service haproxy stop
+  b)forcefully - sudo kill -9 <pid>
+
+Expected results 3a,3b - vip should move to BACKUP node(becomes new MASTER) and requests should continue to be served through vip.
+
+Case4 - bring haproxy back up in MASTER node
+
+Expected result4 - vip should move back to MASTER node and requests should continue to be served through the vip.
+
+
+2)HW failure
+
+Case5
+  a)gracefully - sudo reboot
+  b)forcefully - iLO power manager reset
+
+Expected results 5a,5b - vip should move to BACKUP node(becomes new MASTER) and requests should continue to be served through vip.
+
+Case6 - MASTER node is back up
+
+Expected result6 - keepalived and haproxy should start automatically and vip should move back to MASTER node and requests should continue to be served through the vip.
+
+
+3)NW failure
+
+Case7
+  a)gracefully - sudo if down <interface>
+  b)forcefully - TBD
+
+Expected results 7a,7b - vip should move to BACKUP node(becomes new MASTER) and requests should continue to be served through vip.
+
+Case8 - restart interface
+
+Expected result8 - vip should move back to MASTER node and requests should continue to be served through the vip.
