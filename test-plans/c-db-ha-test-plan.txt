@@ -1,0 +1,27 @@
+Test plan with a three node setup:
+
+
+* Setup the environment as specified @
+  https://github.com/vivekdhayaal/cinder-HA/blob/master/how-tos/c-db-ha-how-to.txt
+
+
+* Test cases:
+
+    Brought one node down and wrote data.
+    RESULT - write successfull and replicated to the remaining two nodes.
+    Brought back the node up.
+    RESULT - the data updated in the two nodes is automatically synced to this node.
+    Stopped mysql service in the node 210(configured with haproxy to receive all requests).
+    RESULT - all requests were directed to the node 209(next backup node configured in haproxy).
+    Brought mysql service back up in node 210.
+    RESULT - all requests were directed back to node 210 again.
+    Killed mysqld in the node 210.
+    RESULT - all requests were directed to node 209.
+    Brought mysql service back up in node 210.
+    RESULT - all requests were directed back to node 210 again.
+    Rebooted the node 210.
+    RESULT - vip switched to node 216(standby haproxy) and all requests were directed to the mysqld in node 209.
+    Node 210 is back up.
+    RESULT - vip switched back to node 210 but all requests were still directed to the mysqld in node 209.
+    Brought mysqld back up in node 210.
+    RESULT - all requests were directed back to mysqld node 210 again.

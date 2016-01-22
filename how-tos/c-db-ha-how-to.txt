@@ -1,0 +1,28 @@
+Acquire three nodes, as prescribed in the galera documentation.
+
+Configure keepalived, haproxy as shown @
+https://github.com/vivekdhayaal/cinder-HA/blob/master/how-tos/c-api-ha-how-to.txt
+
+Galera first node:
+1)Follow the installation instructions @
+  a)http://galeracluster.com/documentation-webpages/galerainstallation.html
+    with just one correction. Use the below command to disable AppArmor
+    "sudo ln -s {/etc/apparmor.d,/etc/apparmor.d/disable}/usr.sbin.mysqld"
+  b)http://galeracluster.com/documentation-webpages/installmysql.html
+2)Use the MySQL configuration shown in 
+  https://github.com/vivekdhayaal/cinder-HA/blob/master/galera/my.cnf
+  NOTE: this cnf file was developed with the below references:
+  http://galeracluster.com/documentation-webpages/configuration.html
+  http://galeracluster.com/documentation-webpages/dbconfiguration.html
+3)Follow the swap space configuration steps @
+  http://galeracluster.com/documentation-webpages/configuration.html
+4)sudo service mysql start --wsrep-new-cluster
+
+Galera remaining nodes:
+1)Same as above
+2)"
+3)"
+4)sudo service mysql start
+
+Scale-out:
+Add new nodes by following the steps @ "Galera remaining nodes" section.
