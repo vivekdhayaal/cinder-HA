@@ -1,0 +1,20 @@
+Acquire two nodes.
+
+Configure keepalived with volume configuration similar to that shown @
+https://github.com/vivekdhayaal/cinder-HA/blob/master/how-tos/c-api-ha-how-to.txt
+
+Place the keepalivednotify.sh script in /usr/local/bin and set it as an executable
+
+Configure ZeroMQ similar to that shown @
+https://github.com/vivekdhayaal/cinder-HA/blob/master/how-tos/c-mq-ha-how-to.txt
+
+Map the volume hostname to the volume VIP
+
+
+c-vol MASTER node:
+1)Specify that hostname against cinder-volume topic in /etc/oslo/matchmaker_ring.json
+2)Re-Start all cinder services
+
+c-vol Backup node:
+1)Specify that hostname against cinder-volume topic in /etc/oslo/matchmaker_ring.json
+2)Re-Start c-api and c-sch services.

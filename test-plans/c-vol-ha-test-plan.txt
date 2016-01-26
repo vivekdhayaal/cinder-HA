@@ -1,0 +1,21 @@
+Test plan with a two node setup:
+
+
+* Setup the environment as specified @
+  https://github.com/vivekdhayaal/cinder-HA/blob/master/how-tos/c-vol-ha-how-to.txt
+
+
+* Test cases:
+
+    Brought the c-vol process down in first node and made volume create requests.
+    RESULT - The VIP switched to the other c-vol node and the c-sch node scheduled requests to that node.
+    Brought back the process up in first node.
+    RESULT - The VIP switched back to this c-vol node and the c-sch node scheduled requests to this node.
+    Brought down the first node.
+    RESULT - The VIP switched to the other c-vol node and the c-sch node scheduled requests to that node.
+    Brought back the node up.
+    RESULT - The VIP switched back to this c-vol node and the c-sch node scheduled requests to this node.
+    Brought down the network in the first node.
+    RESULT - The VIP switched to the other c-vol node and the c-sch node scheduled requests to that node.
+    Brought back the network up.
+    RESULT - The VIP switched back to this c-vol node and the c-sch node scheduled requests to this node.
