@@ -1,0 +1,23 @@
+Test plan with a two node setup:
+
+
+* Setup the environment as specified @
+  https://github.com/vivekdhayaal/cinder-HA/blob/master/how-tos/c-mq-ha-how-to.txt
+
+
+* Test cases:
+
+    Made multiple volume create requests to a c-api server.
+    RESULT - It scheduled the request to the two c-sch servers in round robin fashion(Verified in the logs).
+    Brought one c-sch process down and made volume create requests.
+    RESULT - The c-api node scheduled requests through the other available c-sch node.
+    Brought back the process up.
+    RESULT - Requests were scheduled through the two c-sch servers in round robin fashion(Verified in the logs).
+    Brought one c-sch process down and made volume create requests.
+    RESULT - The c-api node scheduled requests through the other available c-sch node.
+    Brought back the node up.
+    RESULT - Requests were scheduled through the two c-sch servers in round robin fashion(Verified in the logs).
+    Brought one c-sch process down and made volume create requests.
+    RESULT - The c-api node scheduled requests through the other available c-sch node.
+    Brought back the network up.
+    RESULT - Requests were scheduled through the two c-sch servers in round robin fashion(Verified in the logs).

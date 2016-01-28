@@ -1,0 +1,27 @@
+Acquire two nodes.
+
+
+Cinder FIRST node:
+1)Setup devstack with cinder services alone
+2)Stop all services
+3)Remove the section "[oslo_messaging_rabbit]" from cinder.conf
+4)sudo apt-get install libzmq3
+5)sudo pip install pyzmq (OR) sudo apt-get install python-zmq
+6)Add to /etc/cinder/cinder.conf and /etc/oslo/matchmaker_ring.json the configurations specified @
+  https://github.com/vivekdhayaal/cinder-HA/blob/master/zeromq/cinder.conf
+  https://github.com/vivekdhayaal/cinder-HA/blob/master/zeromq/matchmaker_ring.json
+7)Set the ownership of "/var/run/cinder" directory to cinder service process owner
+8)/usr/local/bin/oslo-messaging-zmq-receiver --config-file /etc/cinder/cinder.conf
+9)Start all services
+
+
+Cinder NEXT node:
+1)Repeat steps 1 to 8 as done for cinder first node.
+2)Specify first node IP in "auth_uri", "auth_url", "connection", "glance_api_servers" params in /etc/cinder/cinder.conf
+3)Start c-api & c-sch services alone.
+
+
+Scale-out:
+1)Add new nodes with c-api & c-sch services alone running(as mentioned under section "cinder NEXT node")
+2)Add these node information in matchmaker_ring.json in all the nodes in the cluster
+3)Restart all cinder services in a phased manner.
